@@ -1,19 +1,12 @@
-from aiogram import Bot, types
-from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
+from create_bot import dp
+async  def on_startup(_):
+    print('Бот вышел в онлайн')
 
-import os
+from handlers import client, admin, other
 
-bot = Bot(token=os.getenv('TOKEN'))
-dp = Dispatcher(bot)
+client.register_handlers_client(dp)
+other.register_handlers_other(dp)
 
-@dp.message_handler()# декоратор
-async def echo_send(message : types.Message):
-    await message.answer (message.text) #ждем своботное место в потоке команды
-    # await message.reply(message.text)
-    # await bot.send_message(message.from_user.id, message.text)
-
-
-
-"""команда запуска бота"""
-executor.start_polling(dp, skip_updates=True)
+if __name__ == "__main__":
+    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
