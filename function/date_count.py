@@ -26,7 +26,18 @@ def deltatime(t1: str, t2: str):
 
     delta_y = t2.year - t1.year - dy
 
-    return f'{delta_y} г {delta_m} м {delta_d} д ({delta_y*12+delta_m} мес)'
+    if delta_y == 0:
+        if delta_m == 0:
+            return f'{delta_d} дн ({delta_y * 12 + delta_m} мес)'
+        else:
+            return f'{delta_m} мес {delta_d} дн ({delta_y * 12 + delta_m} мес)'
+    elif 1 <= int(str(delta_y)[-1]) <= 4 and (delta_y < 11 or delta_y > 14):
+        if int(str(delta_y)[-1]) == 1:
+            return f'{delta_y} год {delta_m} мес {delta_d} дн ({delta_y * 12 + delta_m} мес)'
+        else:
+            return f'{delta_y} года {delta_m} мес {delta_d} дн ({delta_y * 12 + delta_m} мес)'
+    else:
+        return f'{delta_y} лет {delta_m} мес {delta_d} дн ({delta_y * 12 + delta_m} мес)'
 
 # date_from = datetime.datetime.strptime(input('Введите дату с: '), '%d.%m.%Y')
 # date_to = datetime.datetime.strptime(input('Введите дату по: '), '%d.%m.%Y')
