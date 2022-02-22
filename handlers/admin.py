@@ -4,11 +4,12 @@ from aiogram import types, Dispatcher
 from function import deltatime, cwt
 from aiogram.dispatcher.filters import Text
 from re import fullmatch
+import string
+
 class FSMadmin (StatesGroup):
     date_1 = State() #состояние бота
     date_2 = State()
     result = State()
-    result_2 = State()
     count_peopl = State()
 
 # Начало диалога подсчета даты
@@ -51,13 +52,15 @@ async def load_2date(message: types.Message, state: FSMContext):
 Если хотите посчитать чел/дни (чел/час) введите "/Продолжить"')
 
 async def reset(message: types.Message, state: FSMContext):
-    if message.text == '/Результат': # Text(equals='/Результат', ignore_case=True):
+    if {i.lower().translate(str.maketrans('','', string.punctuation)) for i in message.text.split(' ')}\
+        .intersection(['результат']) != set():
         async with state.proxy() as data:
             await message.reply(deltatime(str(data['date_1']), str(data['date_2'])))
-        await FSMadmin.count_peopl.set()
+        # await FSMadmin.count_peopl.set()
         await message.reply('Если хотите посчитать чел/дни (чел/час) введите "Продолжить"\n\
 Если хотите начать заново введите "Отмена"')
-    elif message.text == '/Продолжить': # Text(equals='/Продолжить', ignore_case=True):
+    else:
+        #message.text == '/Продолжить': # Text(equals='/Продолжить', ignore_case=True):
         await FSMadmin.count_peopl.set()
         await message.reply('Введие количество людей')
 
@@ -84,11 +87,13 @@ async def load_result2(message: types.Message, state: FSMContext):
 # регстрируем хендлеры
 def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(cm_start, commands='Считать', state=None)
+    dp.register_message_handler(cm_start, Text(equals='считать', ignore_case=True), state=None)
     dp.register_message_handler(cancel_handler, state="*", commands='отмена')
     dp.register_message_handler(cancel_handler, Text(equals='отмена', ignore_case=True), state="*")
     dp.register_message_handler(load_1date, state=FSMadmin.date_1)
     dp.register_message_handler(load_2date, state=FSMadmin.date_2)
     dp.register_message_handler(reset, commands=['Результат', 'Продолжить'], state=FSMadmin.result)
-    #dp.register_message_handler(cm_count, commands='Продолжить', state=FSMadmin.result_2)
+    dp.register_message_handler(reset, Text(equals=['результат', 'продолжить'], ignore_case=True), state=FSMadmin.result)
+    # dp.register_message_handler(reset, Text(equals='продолжить', ignore_case=True), state=FSMadmin.result)
     dp.register_message_handler(load_result2, state=FSMadmin.count_peopl)
 
