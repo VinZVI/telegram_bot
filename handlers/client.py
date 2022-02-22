@@ -1,6 +1,8 @@
 from aiogram import types, Dispatcher
 from create_bot import bot
 from keyboards import kb_client
+from aiogram.dispatcher.filters import Text
+
 # from aiogram.types import ReplyKeyboardRemove # класс удаляет клавиатуру
 # @dp.message_handler(commands=['start', 'help'])
 async def commands_start(message : types.Message):
@@ -13,3 +15,4 @@ async def commands_start(message : types.Message):
 
 def register_handlers_client(dp : Dispatcher):
     dp.register_message_handler(commands_start, commands=['start', 'help'])
+    dp.register_message_handler(commands_start, Text(equals='привет', ignore_case=True))

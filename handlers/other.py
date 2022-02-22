@@ -1,6 +1,6 @@
 from aiogram import types, Dispatcher
 import json, string
-
+from keyboards import kb_client
 
 
 
@@ -12,7 +12,7 @@ async def filter_cenz(message : types.Message):
         await message.reply('Маты запрещены')
         await message.delete()
     else:
-        await message.reply('Нет такой команды, пожалуйста изпользуйте клавиатуру')
+        await message.reply('Нет такой команды, пожалуйста изпользуйте клавиатуру', reply_markup=kb_client)
         await message.delete()
 
 

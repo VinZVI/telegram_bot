@@ -5,6 +5,7 @@ from function import deltatime, cwt
 from aiogram.dispatcher.filters import Text
 from re import fullmatch
 import string
+from keyboards import kb_client
 
 class FSMadmin (StatesGroup):
     date_1 = State() #состояние бота
@@ -49,7 +50,7 @@ async def load_2date(message: types.Message, state: FSMContext):
         data['date_2'] = message.text
     await FSMadmin.result.set()
     await message.reply('Если хотите узнать результат введиете "/Результат"\n\
-Если хотите посчитать чел/дни (чел/час) введите "/Продолжить"')
+Если хотите посчитать чел/дни (чел/час) введите "/Продолжить"', reply_markup=kb_client)
 
 async def reset(message: types.Message, state: FSMContext):
     if {i.lower().translate(str.maketrans('','', string.punctuation)) for i in message.text.split(' ')}\
@@ -58,7 +59,7 @@ async def reset(message: types.Message, state: FSMContext):
             await message.reply(deltatime(str(data['date_1']), str(data['date_2'])))
         # await FSMadmin.count_peopl.set()
         await message.reply('Если хотите посчитать чел/дни (чел/час) введите "Продолжить"\n\
-Если хотите начать заново введите "Отмена"')
+Если хотите начать заново введите "Отмена"', reply_markup=kb_client)
     else:
         #message.text == '/Продолжить': # Text(equals='/Продолжить', ignore_case=True):
         await FSMadmin.count_peopl.set()
