@@ -6,7 +6,7 @@ from datetime import  date
 def deltatime(t1: str, t2: str):
     """ функция калькулятора дат
         принимает две даты в формте '%d.%m.%Y'
-        возвращает время между датами в год месяц день (меяцев)"""
+        возвращает время между датами в год месяц день (меяцев) """
     t1 = datetime.datetime.strptime(t1, '%d.%m.%Y')
     t2 = datetime.datetime.strptime(t2, '%d.%m.%Y')
     dm = 0

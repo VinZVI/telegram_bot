@@ -8,11 +8,11 @@ async def on_startup(_):
     # sqlite_db.sql_start() # запускаем функцию базы данных
 
 
-from handlers import client, admin, other, date_count_handlers
+from handlers import client, polling, other, date_count_handlers
 
 client.register_handlers_client(dp)
+polling.register_handlers_polling(dp)
 date_count_handlers.register_handlers_dc(dp)
-# admin.register_handlers_admin(dp)
 other.register_handlers_other(dp)
 
 

@@ -18,12 +18,14 @@ class FSMadmin (StatesGroup):
 #@dp.message_handler(commands='Считать', state=None)
 async def cm_start(message: types.Message):
     await FSMadmin.date_1.set()
-    await message.reply('Введие первую дату в формате дд.мм.гггг')
+    await message.reply('Введие первую дату в формате дд.мм.гггг\n\
+Если хотите начать заново введите "Отмена"', reply_markup=kb_dc)
 
-
+# функция для инлайт кнопки
 async def cm_start2(message: types.Message):
     await FSMadmin.date_1.set()
-    await message.message.answer('Введие первую дату в формате дд.мм.гггг')
+    await message.message.answer('Введие первую дату в формате дд.мм.гггг\n\
+Если хотите начать заново введите "Отмена"', reply_markup=kb_dc)
     await message.answer()
 
 # вывод из состояний
@@ -34,7 +36,7 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     if current_state is None:
         return
     await state.finish()
-    await message.reply('ОК')
+    await message.reply("Действие отменено. Введите /start, чтобы начать заново.", reply_markup=types.ReplyKeyboardRemove())
 
 # ловим первую дату
 #@dp.message_handler(content_types=['date_1'], state=FSMadmin.date_1)
@@ -46,7 +48,8 @@ async def load_1date(message: types.Message, state: FSMContext):
         data['user_name'] = message.from_user.id
         data['date_1'] = message.text
     await FSMadmin.next()
-    await message.reply('Введие вторую дату в формате дд.мм.гггг')
+    await message.reply('Введие вторую дату в формате дд.мм.гггг\n\
+Если хотите начать заново введите "Отмена"', reply_markup=kb_dc)
 
 # ловим вторую дату
 #@dp.message_handler(state=FSMadmin.date_2)
