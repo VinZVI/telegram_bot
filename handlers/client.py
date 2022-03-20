@@ -48,18 +48,22 @@ async def commands_start(message: types.Message):
         # Если у команды /start или /startgroup есть параметр, то это, скорее всего, парпметр Опроса - 'Poll'.
         # Проверяем и отправляем.
         else:
-            msg = await bot.send_poll(chat_id=message.chat.id, question='Жив, здоров?', is_anonymous=False,
-                                      options=["ОК", "Не ОК"], type="regular", open_period=3600)
-            # Сохраняем себе опрос в память
-            polling_database[words[1]].append(Poll(
-                poll_id_cl=msg.poll.id,
-                question=msg.poll.question,
-                options=[o.text for o in message.poll.options],
-                chat_id=msg.chat.id,  # ... а также сохраняем chat_id ...
-                message_id=msg.message_id)  # ... и message_id для последующего закрытия опроса.
-            )
-            # сохраняем опрос - викторина
-            polling_owners[msg.poll.id] = str(words[1])
+            poll_owner = polling_owners.get(words[1])
+            print(poll_owner, words[1])
+            if not poll_owner:
+                await message.reply(
+                    "Попробуйте создать новый опрос. /start")
+                return
+            for seved_poll in polling_database[poll_owner]:
+                if seved_poll.poll_id == words[1]:
+                    msg = await bot.send_poll(chat_id=message.chat.id, question=seved_poll.question, is_anonymous=False,
+                                              options=seved_poll.options, type="regular", open_period=36000)
+                    polling_owners[msg.poll.id] = poll_owner  # сохраняем опрос - викторина
+                    del polling_owners[words[1]]  # удаляем старую запись
+                    seved_poll.poll_id = msg.poll.id  # записываем id опроса в базу
+                    seved_poll.chat_id = msg.chat.id,  # ... а также сохраняем chat_id ...
+                    seved_poll.message_id = msg.message_id  # ... и message_id для последующего закрытия опроса.
+                    # print(msg.chat.id, msg.message_id)
 
 
 # Начало диалога Опроса
@@ -82,10 +86,16 @@ async def cmd_poll(message: types.Message, state: FSMContext):
     if not polling_database.get(str(message.from_user.id)):
         polling_database[str(message.from_user.id)] = []
     # добавляем в эту запись количество людей для опроса
-    # polling_database[str(message.from_user.id)].append(Poll(count_pl_gr=int(message.text)))
+    polling_database[str(message.from_user.id)].append(Poll(
+        poll_id=message.message_id,
+        question='Жив, здоров?',
+        options=["ОК", "Не ОК"],
+        countPeoplGoup=int(message.text)))
+    polling_owners[message.message_id] = str(message.from_user.id)
+    print(polling_owners)
     poll_keyboard = InlineKeyboardMarkup()
     poll_keyboard.add(InlineKeyboardButton(text="Создать опрос",
-                                           url=await get_startgroup_link(str(message.from_user.id))))
+                                           url=await get_startgroup_link(str(message.message_id))))
     await message.reply("Нажмите на кнопку ниже и создайте опрос!", reply_markup=poll_keyboard)
     await state.finish()
 
