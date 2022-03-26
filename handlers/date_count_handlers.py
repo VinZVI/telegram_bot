@@ -1,25 +1,38 @@
-from aiogram.dispatcher import FSMContext # хендлеры машины состояний
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram import types, Dispatcher
-from function import deltatime, cwt
-from aiogram.dispatcher.filters import Text
-from re import fullmatch
 import string
-from keyboards import kb_dc
-from date_base.sqlite_db import sql_add_command
+from re import fullmatch
 
-class FSMadmin (StatesGroup):
-    date_1 = State() #состояние бота
+from aiogram import types, Dispatcher
+from aiogram.dispatcher import FSMContext  # хендлеры машины состояний
+from aiogram.dispatcher.filters import Text
+from aiogram.dispatcher.filters.state import State, StatesGroup
+
+from create_bot import bot
+from function import deltatime, cwt
+from keyboards import kb_dc
+
+
+class FSMadmin(StatesGroup):
+    date_1 = State()  # состояние бота
     date_2 = State()
     result = State()
     count_peopl = State()
 
+
 # Начало диалога подсчета даты
-#@dp.message_handler(commands='Считать', state=None)
+# @dp.message_handler(commands='Считать', state=None)
 async def cm_start(message: types.Message):
-    await FSMadmin.date_1.set()
-    await message.reply('Введие первую дату в формате дд.мм.гггг\n\
+    if message.chat.type == types.ChatType.PRIVATE:
+        await FSMadmin.date_1.set()
+        await message.reply('Введие первую дату в формате дд.мм.гггг\n\
 Если хотите начать заново введите "Отмена"', reply_markup=kb_dc)
+    else:
+        bot_info = await bot.get_me()  # Получаем информацию о нашем боте
+        keyboard = types.InlineKeyboardMarkup()  # Создаём клавиатуру с URL-кнопкой для перехода в ЛС
+        move_to_dm_button = types.InlineKeyboardButton(text="Перейти в ЛС",
+                                                       url=f"t.me/{bot_info.username}?start=anything")
+        keyboard.add(move_to_dm_button)
+        await message.reply("Общение с ботом через ЛС, напишите ему:", reply_markup=keyboard)
+
 
 # функция для инлайт кнопки
 async def cm_start2(message: types.Message):
@@ -27,6 +40,7 @@ async def cm_start2(message: types.Message):
     await message.message.answer('Введие первую дату в формате дд.мм.гггг\n\
 Если хотите начать заново введите "Отмена"', reply_markup=kb_dc)
     await message.answer()
+
 
 # вывод из состояний
 # @dp.message_handler(state="*", commands='отмена')

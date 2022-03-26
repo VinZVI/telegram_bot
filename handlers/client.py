@@ -1,39 +1,27 @@
-from re import fullmatch
-
 from aiogram import types, Dispatcher
-from aiogram.dispatcher import FSMContext  # хендлеры машины состояний
 from aiogram.dispatcher.filters import Text
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-from aiogram.utils.deep_linking import get_startgroup_link
 
 from create_bot import bot
-from function import Poll
-
-polling_database = {}  # здесь хранится информация о опросах
-polling_owners = {}  # здесь хранятся пары "id опроса <—> id её создателя"
-
-
-class FSMclient(StatesGroup):
-    poll_1 = State()  # состояние бота
-    poll_2 = State()
+from handlers.polling import polling_database, polling_owners, ID
 
 
 # from aiogram.types import ReplyKeyboardRemove # класс удаляет клавиатуру
 # @dp.message_handler(commands=['start', 'help'])
-async def commands_start(message: types.Message):
+async def commands_start_client(message: types.Message):
     if message.chat.type == types.ChatType.PRIVATE:
-        await bot.send_message(message.from_user.id, 'Привет!\
+        if message.from_user.id in ID:
+            await message.reply('Что нужно хозяин?,\
 \nНапиши "Опрос", если нужно опросить всех членов группы.\
 \nНапиши "Довести", если нужно довести информацию.\
+\n', reply_markup=ReplyKeyboardMarkup(resize_keyboard=True). \
+                                add(KeyboardButton('Опрос'), \
+                                    KeyboardButton('Довести')))
+        else:
+            await message.reply('Привет!\
 \nНапиши "Считать" для подсчета разности дат.\
 \n', reply_markup=ReplyKeyboardMarkup(resize_keyboard=True). \
-                               add(
-            KeyboardButton('Опрос'), \
-            KeyboardButton('Довести'), \
-            KeyboardButton('Считать')))
-
+                                add(KeyboardButton('Считать')))
         await message.delete()
     else:
         words = message.text.split()
@@ -48,75 +36,40 @@ async def commands_start(message: types.Message):
         # Если у команды /start или /startgroup есть параметр, то это, скорее всего, парпметр Опроса - 'Poll'.
         # Проверяем и отправляем.
         else:
-            poll_owner = polling_owners.get(words[1])
-            print(poll_owner, words[1])
+            poll_owner = polling_owners.get(int(words[1]))
+            # print(poll_owner, polling_owners)
             if not poll_owner:
                 await message.reply(
                     "Попробуйте создать новый опрос. /start")
                 return
-            for seved_poll in polling_database[poll_owner]:
-                if seved_poll.poll_id == words[1]:
+            for seved_poll in polling_database[str(poll_owner)]:
+                # print(seved_poll.poll_id, words[1])
+                if seved_poll.poll_id == int(words[1]):
                     msg = await bot.send_poll(chat_id=message.chat.id, question=seved_poll.question, is_anonymous=False,
-                                              options=seved_poll.options, type="regular", open_period=36000)
+                                              options=seved_poll.options, type="regular", open_period=360)
                     polling_owners[msg.poll.id] = poll_owner  # сохраняем опрос - викторина
-                    del polling_owners[words[1]]  # удаляем старую запись
+                    del polling_owners[int(words[1])]  # удаляем старую запись
                     seved_poll.poll_id = msg.poll.id  # записываем id опроса в базу
                     seved_poll.chat_id = msg.chat.id,  # ... а также сохраняем chat_id ...
                     seved_poll.message_id = msg.message_id  # ... и message_id для последующего закрытия опроса.
                     # print(msg.chat.id, msg.message_id)
+                # else:
+                #     await message.reply(
+                #         "Попробуйте создать новый опрос2. /start")
+                #     return
 
 
-# Начало диалога Опроса
-# @dp.message_handler(commands='Опрос', state=None)
-async def cmd_start_poll(message: types.Message):
-    await FSMclient.poll_1.set()
-    poll_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    poll_kb.add(KeyboardButton(text="Отмена"))
-    await message.reply('Введие сколько человек хотите опросить в группе.\n\
-Если хотите начать заново введите "Отмена"', reply_markup=poll_kb)
-
-
-# ловим первую дату
-# @dp.message_handler(content_types=['poll_1'], state=FSMadmin.poll_1)
-async def cmd_poll(message: types.Message, state: FSMContext):
-    if not fullmatch(r"\b\d{1,2}\b", message.text):
-        await message.reply('Пожалуйста, введие количестово людей целым числом не более 2х знаков')
-        return
-    # Если юзер раньше не присылал запросы, выделяем под него запись
-    if not polling_database.get(str(message.from_user.id)):
-        polling_database[str(message.from_user.id)] = []
-    # добавляем в эту запись количество людей для опроса
-    polling_database[str(message.from_user.id)].append(Poll(
-        poll_id=message.message_id,
-        question='Жив, здоров?',
-        options=["ОК", "Не ОК"],
-        countPeoplGoup=int(message.text)))
-    polling_owners[message.message_id] = str(message.from_user.id)
-    print(polling_owners)
-    poll_keyboard = InlineKeyboardMarkup()
-    poll_keyboard.add(InlineKeyboardButton(text="Создать опрос",
-                                           url=await get_startgroup_link(str(message.message_id))))
-    await message.reply("Нажмите на кнопку ниже и создайте опрос!", reply_markup=poll_keyboard)
-    await state.finish()
-
-
-# @dp.callback_query_handler(text='Довести')
-async def count_call(callback: types.Message):
-    await callback.answer('Тут будут другие функции')
-    await callback.answer()
 
 
 # Хэндлер на текстовое сообщение с текстом “Отмена”
 # @dp.message_handler(lambda message: message.text == "Отмена")
 async def action_cancel(message: types.Message):
     remove_keyboard = types.ReplyKeyboardRemove()
-    await message.answer("Действие отменено. Введите /start, чтобы начать заново.", reply_markup=remove_keyboard)
-
+    await message.answer("Действие отменено. Введите /start, чтобы начать заново.", \
+                         reply_markup=ReplyKeyboardMarkup(resize_keyboard=True). \
+                         add(KeyboardButton('/start')))
+    await message.delete()
 def register_handlers_client(dp : Dispatcher):
-    dp.register_message_handler(commands_start, commands='start')
+    dp.register_message_handler(commands_start_client, commands='start')
     dp.register_message_handler(action_cancel, commands='отмена')
     dp.register_message_handler(action_cancel, Text(equals='отмена', ignore_case=True))
-    dp.register_message_handler(cmd_start_poll, Text(equals='опрос', ignore_case=True), state=None)
-    dp.register_message_handler(cmd_poll, state=FSMclient.poll_1)
-    dp.register_callback_query_handler(count_call, text='Довести')
-    # dp.register_message_handler(commands_start, Text(equals='привет', ignore_case=True))
