@@ -11,7 +11,7 @@ from aiogram.utils.deep_linking import get_startgroup_link
 from create_bot import bot
 from function import Poll
 
-ID = [467055923]
+ID = []
 
 polling_database = {}  # здесь хранится информация о опросах
 polling_owners = {}  # здесь хранятся пары "id опроса <—> id её создателя"
@@ -23,8 +23,6 @@ class FSMclient(StatesGroup):
 
 
 """ проверка на админа в группе """
-
-
 # @dp.message_handler(commands='moderator', is_chat_admin=True)
 async def commands_moderator(message: types.Message):
     global ID

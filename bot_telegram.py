@@ -2,10 +2,6 @@ from aiogram.utils import executor
 
 from create_bot import dp
 from handlers import client, other, date_count_handlers, polling
-from aiogram.utils import executor
-
-from create_bot import dp
-from handlers import client, other, date_count_handlers, polling
 
 
 # logging.basicConfig(

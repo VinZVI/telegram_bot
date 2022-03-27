@@ -34,7 +34,6 @@ async def cm_start(message: types.Message):
         await message.reply("Общение с ботом через ЛС, напишите ему:", reply_markup=keyboard)
 
 
-# функция для инлайт кнопки
 async def cm_start2(message: types.Message):
     await FSMadmin.date_1.set()
     await message.message.answer('Введие первую дату в формате дд.мм.гггг\n\
